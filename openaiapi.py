@@ -2,11 +2,10 @@ import os
 from google import genai
 from google.genai.errors import APIError
 
-# --- 設定參數 ---
-# 1. 替換成您的 Gemini API Key
+# 放入自己的 Gemini API Key
 GEMINI_API_KEY = "AIzaSyDOKGxN-daR8k51hrcU1rty0Ea643SHzVs"
 
-# 2. 替換成您要轉錄的音訊檔案路徑
+#放入要轉錄的音訊檔案路徑(要注意檔案格式與大小)
 AUDIO_FILE_PATH = "story.wav"  
 
 # 3. 定義轉錄指令
@@ -30,7 +29,7 @@ def run_gemini_audio_transcription():
         print(f"--- 模型：{MODEL_NAME} ---")
         print(f"正在上傳並處理檔案: {AUDIO_FILE_PATH}...")
 
-        # 1. 將音訊檔案上傳到 Gemini 服務
+        
         # 這會返回一個 File 物件
         audio_file = client.files.upload(file=AUDIO_FILE_PATH)
 
@@ -54,16 +53,10 @@ def run_gemini_audio_transcription():
         print("\n--- AI 轉錄結果 ---")
         print(ai_response)
         
-        # 5. 確保刪除上傳的檔案，避免佔用儲存空間
-        client.files.delete(name=audio_file.name)
-        print(f"\n[狀態] 檔案 {audio_file.name} 已刪除。")
-
-
     except APIError as e:
         print(f"\n[API 錯誤] 發生錯誤：{e}")
-        print("請確認您的 API Key 是否正確，以及檔案大小是否超出免費層級的處理限制。")
     except Exception as e:
         print(f"\n[一般錯誤] 發生錯誤：{e}")
 
-# --- 執行主要功能 ---
+# --- 執行主要功能 --
 run_gemini_audio_transcription()
