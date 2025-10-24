@@ -5,7 +5,7 @@ from google.genai.errors import APIError
 
 if "GEMINI_API_KEY" not in os.environ:
     # 如果找不到環境變數，提供提示並終止程式
-    print("❌ 錯誤：找不到 GEMINI_API_KEY 環境變數。請使用 docker run -e 參數傳遞金鑰。")
+    print(" 錯誤：找不到 GEMINI_API_KEY 環境變數。請使用 docker run -e 參數傳遞金鑰。")
     sys.exit(1)
 
 #放入要轉錄的音訊檔案路徑(要注意檔案格式與大小)
