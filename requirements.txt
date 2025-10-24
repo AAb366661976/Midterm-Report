@@ -2,4 +2,7 @@
 openai
 requests
 tenacity
-google-genai
+google-genai 
+llama-index-llms-gemini
+llama-index-embeddings-gemini
+llama-index

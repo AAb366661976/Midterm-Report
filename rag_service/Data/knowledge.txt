@@ -1,0 +1,20 @@
+# 期中報告專案總結
+我們的期中報告專案標題為「AI 時代的容器化應用：RAG 與語音轉錄服務」。最終成果是展示如何用 Docker 容器化技術，部署一個結合了 RAG 系統和語音轉錄功能的應用程式。專案目的是證明容器化能解決環境相依性問題，確保程式碼在任何機器上都能一致運行。
+
+# RAG 系統 (Retrieval-Augmented Generation)
+RAG 的全稱是檢索增強生成。它的目標是確保 AI 模型（LLM）的回答基於事實，避免產生錯誤的幻覺內容。我們在 RAG 系統中使用 LlamaIndex 框架來簡化文件載入、建立索引和查詢的過程。RAG 的核心流程是：使用者提問 -> 檢索相關知識 -> 將知識傳給 LLM -> LLM 根據知識生成答案。
+
+# 語音轉錄服務 (openaiapi.py 說明)
+1.  檔案位置: 語音轉錄服務的程式碼位於 `audio_transcriber/openaiapi.py`。
+2.  核心功能: 這個程式檔的主要功能是將音訊檔案（例如 `story.wav`）轉錄成文字。
+3.  使用模型: `openaiapi.py` 程式利用 OpenAI 的 Whisper API 來執行語音辨識。
+4.  運行方式: 要啟動這個服務，必須覆寫 Docker 映像檔的預設命令（CMD），使用指令 `python /app/audio_transcriber/openaiapi.py` 啟動。這個服務依賴 `openai` 套件，並要求使用者提供 `OPENAI_API_KEY` 環境變數（在我們的容器中，我們統一使用 `GEMINI_API_KEY` 來模擬 API 存取）。
+
+# 技術架構與模型選擇
+本專案使用 Google 的 Gemini API 服務。
+1.  大型語言模型 (LLM): 使用 `gemini-2.5-flash` 模型，它速度快且具備優秀的多模態能力，適合問答任務。
+2.  嵌入模型 (Embedding Model): 使用 `text-embedding-004` 模型，用來將文件內容轉換成數學向量 (Vector)，以實現高效的相似性檢索。
+3.  容器技術: 使用 Docker 將所有程式碼和依賴套件打包，確保部署的可靠性。
+
+# API 金鑰與安全性
+為了保護 API 金鑰，我們使用環境變數 `GEMINI_API_KEY`，而不是將金鑰硬寫在程式碼中。在運行容器時，必須透過 `-e GEMINI_API_KEY="您的金鑰"` 參數傳遞金鑰。
