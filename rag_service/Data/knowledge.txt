@@ -18,3 +18,10 @@ RAG 的全稱是檢索增強生成。它的目標是確保 AI 模型（LLM）的
 
 # API 金鑰與安全性
 為了保護 API 金鑰，我們使用環境變數 `GEMINI_API_KEY`，而不是將金鑰硬寫在程式碼中。在運行容器時，必須透過 `-e GEMINI_API_KEY="您的金鑰"` 參數傳遞金鑰。
+
+# Docker 服務啟動指令
+本映像檔主要有兩個啟動模式：
+1.  啟動 Pinecone 索引器（只需運行一次）:負責將知識庫上傳到雲端。
+    指令範例：`docker run -e GEMINI_API_KEY="..." -e PINECONE_API_KEY="..." -e PINECONE_ENVIRONMENT="..." my-midterm-report python rag_service/pinecone_indexer.py`
+2.  啟動 RAG 互動式問答服務（常用模式）: 負責連線到 Pinecone 進行問答。
+    指令範例：`docker run -it -e GEMINI_API_KEY="..." -e PINECONE_API_KEY="..." -e PINECONE_ENVIRONMENT="..." my-midterm-report`

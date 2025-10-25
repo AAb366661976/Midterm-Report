@@ -6,3 +6,5 @@ google-genai
 llama-index-llms-gemini
 llama-index-embeddings-gemini
 llama-index
+pinecone-client
+llama-index-vector-stores-pinecone
