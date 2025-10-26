@@ -8,7 +8,7 @@ RAG 互動問答： 使用 LlamaIndex 和 Google Gemini 服務，透過 Pinecone
 
 語音轉錄： 使用 OpenAI Whisper API（通過 Gemini Key 模擬）將音訊檔（story.wav）轉換為文字。
 
-**前置準備 (必備)**
+# 前置準備 (必備)
 
 取得 API 金鑰： 需準備您的 Gemini API Key，它同時用於 RAG 服務和語音轉錄服務。
 
@@ -18,7 +18,7 @@ Docker 服務： 確保您的本機 Docker 服務正在運行，且虛擬化支�
 
 專案提供兩種運行模式：本地文件模式（基礎）和 Pinecone 雲端模式（進階）。
 
-模式一：使用 Docker Hub 預建映像檔 (基礎/最快速)
+# 模式一：使用 Docker Hub 預建映像檔 (基礎/最快速)
 
 此模式使用 Docker Hub 上的最新映像檔，且知識庫不使用 Pinecone（僅使用映像檔內建的本地文件）。
 
@@ -43,7 +43,7 @@ docker run -it -e GEMINI_API_KEY="YOUR_API_KEY_HERE" bella12345694/my-midterm-re
 docker run \-e GEMINI_API_KEY="YOUR_API_KEY_HERE" \bella12345694/my-midterm-report \python audio_transcriber/openaiapi.py
 
 
-模式二：使用原始碼與 Pinecone 雲端模式 (進階/專業升級)
+# 模式二：使用原始碼與 Pinecone 雲端模式 
 
 此模式將 RAG 知識庫升級到 Pinecone 雲端向量資料庫，以提供更好的擴展性和持久性。
 

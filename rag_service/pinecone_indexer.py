@@ -3,7 +3,7 @@ import sys
 import logging
 # 引入 Pinecone 相關的異常類，用於捕獲索引已存在的錯誤
 from pinecone import Pinecone as PineconeClient, ServerlessSpec
-from pinecone.exceptions import PineconeApiException # <--- 這是關鍵的匯入，用於捕捉 API 錯誤
+from pinecone.exceptions import PineconeApiException 
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 from llama_index.embeddings.gemini import GeminiEmbedding
 from llama_index.vector_stores.pinecone import PineconeVectorStore
@@ -28,50 +28,71 @@ if "GEMINI_API_KEY" not in os.environ:
 def index_data_to_pinecone():
     """載入文件，分割，並將向量儲存到 Pinecone。"""
     
-    # 步驟 1/5: 載入文件
-    documents = SimpleDirectoryReader(input_dir="Data").load_data()
+    # 載入文件 
+    try:
+        documents = SimpleDirectoryReader(input_dir="Data").load_data()
+    except Exception as e:
+        logger.error(f"載入文件失敗，請確認 'Data' 資料夾是否存在且包含文件: {e}")
+        sys.exit(1)
+        
     logger.info(f"載入了 {len(documents)} 個文件。")
     
-    # 步驟 2/5: 初始化 Pinecone 客戶端
+    # 初始化 Pinecone 客戶端
     try:
         pinecone = PineconeClient(api_key=PINECONE_API_KEY)
     except Exception as e:
         logger.error(f" Pinecone 客戶端初始化失敗: {e}")
         sys.exit(1)
 
-    # 步驟 3/5: 檢查並建立 Pinecone 索引 (如果已存在，捕獲 409 錯誤)
-    # 為了應對 list_indexes() 可能的延遲，我們用 try-except 來確保索引建立不會造成程式中斷
-    if INDEX_NAME not in pinecone.list_indexes():
-        logger.info(f"正在嘗試建立 Pinecone 索引: {INDEX_NAME}...")
-        try:
-            pinecone.create_index(
-                name=INDEX_NAME, 
-                dimension=768, 
-                metric="cosine", 
-                # 採用免費層支援的 aws-us-east-1 地區
-                spec=ServerlessSpec(cloud='aws', region='us-east-1'), 
-            )
-            logger.info("索引建立完成。")
-        except PineconeApiException as e:
-            # 捕獲 409 Conflict (資源已存在) 錯誤
-            if e.status == 409 and "ALREADY_EXISTS" in str(e):
-                logger.info(f"Pinecone 索引 '{INDEX_NAME}' 已存在，將直接使用（已捕獲到 409 衝突錯誤）。")
-            else:
-                logger.error(f"建立索引時發生未預期的 API 錯誤: {e}")
-                sys.exit(1)
-    else:
-        logger.info(f"Pinecone 索引 '{INDEX_NAME}' 已存在，將直接使用。")
+    # 強制刪除舊索引並重建
+    logger.info(f"嘗試刪除舊索引 '{INDEX_NAME}' (如果存在)...")
+    try:
+        # 直接嘗試刪除，如果索引不存在會拋出錯誤，由 except 區塊捕獲
+        pinecone.delete_index(INDEX_NAME)
+        logger.info("舊索引刪除完成。")
+    except PineconeApiException as e:
+        # 捕獲索引不存在時的錯誤 (通常是 404/NOT_FOUND)，忽略並繼續創建
+        if "NOT_FOUND" in str(e) or e.status == 404:
+            logger.info("舊索引不存在，跳過刪除。")
+        else:
+            logger.error(f"刪除舊索引時發生 API 錯誤: {e}")
+            sys.exit(1)
+    except Exception as e:
+        logger.error(f"刪除舊索引時發生一般錯誤: {e}")
+        sys.exit(1)
 
-    # 步驟 4/5: 設定 LlamaIndex 的組件
+    logger.info(f"正在建立 Pinecone 索引: {INDEX_NAME}...")
+    try:
+        # 建立新索引
+        pinecone.create_index(
+            name=INDEX_NAME, 
+            dimension=768, 
+            metric="cosine", 
+            # 採用免費層支援的 aws-us-east-1 地區
+            spec=ServerlessSpec(cloud='aws', region='us-east-1'), 
+        )
+        logger.info("索引建立完成。")
+    except PineconeApiException as e:
+        # 再次處理 409 衝突，如果發生，則表示索引在刪除後到創建前已經被其他進程重建
+        if e.status == 409 and "ALREADY_EXISTS" in str(e):
+            logger.info(f"Pinecone 索引 '{INDEX_NAME}' 存在，直接使用。")
+        else:
+            logger.error(f"建立索引時發生 API 錯誤: {e}")
+            sys.exit(1)
+    except Exception as e:
+        logger.error(f"建立索引時發生一般錯誤: {e}")
+        sys.exit(1)
+
+
+    #  設定 LlamaIndex 的組件
     embed_model = GeminiEmbedding(model_name="text-embedding-004") 
     vector_store = PineconeVectorStore(pinecone_index=pinecone.Index(INDEX_NAME))
     
     # 文章分割器 (Chunking)
     text_splitter = SentenceSplitter(chunk_size=512, chunk_overlap=20) 
 
-    # 步驟 5/5: 建立索引 (將數據上傳到 Pinecone)
-    logger.info("步驟 5/5: 開始建立 LlamaIndex 索引並上傳資料至 Pinecone...")
-    # 由於索引已存在或剛剛建立，這裡將會執行數據上傳操作
+    # 建立索引 (將數據上傳到 Pinecone)
+    logger.info(" 開始建立 LlamaIndex 索引並上傳資料至 Pinecone...")
     VectorStoreIndex.from_documents(
         documents, 
         embed_model=embed_model, 
